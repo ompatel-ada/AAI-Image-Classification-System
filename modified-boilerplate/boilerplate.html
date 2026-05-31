@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teachable Machine Image Classifier</title>
+
+  <!-- p5.js for canvas and image display -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.dom.min.js"></script>
+
+  <!-- TensorFlow.js and Teachable Machine image library -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+
+<body>
+  <input type="file" id="imageUpload" accept="image/*" />
+
+  <div id="image_container"></div>
+
+  <div id="results" style="margin-top: 10px; font-weight: bold;">
+    Please upload an image...
+  </div>
+
+  <script src="services.js"></script>
+</body>
+</html>

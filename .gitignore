@@ -1,0 +1,19 @@
+# Full CelebA dataset / downloaded files
+archive/
+img_align_celeba/
+list_attr_celeba.csv
+list_attr_celeba.txt
+*.zip
+
+# Generated datasets
+teachable_machine_data/
+celeba_split/
+dataset_split/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS/editor files
+.DS_Store
+.vscode/

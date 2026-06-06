@@ -1,6 +1,6 @@
 "use strict";
 
-const modelURLBase = "https://teachablemachine.withgoogle.com/models/6kvLm3cR5/";
+const modelURLBase = "https://teachablemachine.withgoogle.com/models/cv1XKFYWC/";
 
 let model;
 let inputImage = null;

@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Teachable Machine Image Classifier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Image Classification System</title>
 
   <!-- p5.js for canvas and image display -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
@@ -11,15 +12,250 @@
   <!-- TensorFlow.js and Teachable Machine image library -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #eaf1ff, #f7f9fc);
+      color: #1b2a41;
+    }
+
+    .page-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #143c73, #1f5aa6);
+      color: white;
+      padding: 32px 24px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    .hero p {
+      margin: 0;
+      font-size: 1rem;
+      opacity: 0.95;
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px 30px;
+    }
+
+    .upload-panel {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 24px rgba(20, 60, 115, 0.12);
+      margin-bottom: 24px;
+    }
+
+    .upload-panel h2 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #143c73;
+      font-size: 1.2rem;
+    }
+
+    .upload-panel p {
+      margin-top: 0;
+      color: #4e5d78;
+      font-size: 0.95rem;
+    }
+
+    #imageUpload {
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid #cfd8e3;
+      border-radius: 10px;
+      background: #f8fbff;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .content-grid {
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 10px 24px rgba(20, 60, 115, 0.12);
+      padding: 22px;
+      flex: 1 1 480px;
+      min-width: 320px;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+      margin-bottom: 18px;
+      color: #143c73;
+      font-size: 1.25rem;
+    }
+
+    .image-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #image_container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 8px;
+    }
+
+    .results-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .status-box {
+      background: #f4f8ff;
+      border-left: 5px solid #1f5aa6;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      color: #274472;
+      font-weight: 600;
+    }
+
+    .result-card {
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      border: 1px solid #e0e7f0;
+      background: #fbfdff;
+    }
+
+    .result-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #5b6f8d;
+      margin-bottom: 8px;
+    }
+
+    .result-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .result-confidence {
+      font-size: 0.95rem;
+      color: #4e5d78;
+    }
+
+    .status-is {
+      color: #157347;
+    }
+
+    .status-likely {
+      color: #b26a00;
+    }
+
+    .status-could {
+      color: #b02a37;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .badge-is {
+      background: #d1f2df;
+      color: #157347;
+    }
+
+    .badge-likely {
+      background: #fff1cc;
+      color: #b26a00;
+    }
+
+    .badge-could {
+      background: #f8d7da;
+      color: #b02a37;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: #6b7a90;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 900px) {
+      .content-grid {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <input type="file" id="imageUpload" accept="image/*" />
+  <div class="page-wrapper">
+    <header class="hero">
+      <h1>AI Image Classification System</h1>
+      <p>
+        Facial attribute classification using Teachable Machine models for gender,
+        age group, and eyewear detection.
+      </p>
+    </header>
 
-  <div id="image_container"></div>
+    <main class="main-container">
+      <section class="upload-panel">
+        <h2>Upload an Image</h2>
+        <p>Select a face image to classify it across the three trained models.</p>
+        <input type="file" id="imageUpload" accept="image/*" />
+      </section>
 
-  <div id="results" style="margin-top: 10px; font-weight: bold;">
-    Please upload an image...
+      <section class="content-grid">
+        <div class="panel image-panel">
+          <h3>Uploaded Image</h3>
+          <div id="image_container"></div>
+        </div>
+
+        <div class="panel results-panel">
+          <h3>Classification Results</h3>
+          <div id="results" class="status-box">Loading models...</div>
+          <div class="footer-note">
+            Confidence is interpreted using threshold-based wording:
+            <strong>could be</strong>, <strong>is likely</strong>, and <strong>is</strong>.
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
   <script src="services.js"></script>

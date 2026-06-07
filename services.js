@@ -21,13 +21,20 @@ async function loadSingleModel(modelBaseURL) {
 }
 
 async function preloadModels() {
-  document.getElementById("results").innerHTML = "Loading models...";
+  const resultsContainer = document.getElementById("results");
+  resultsContainer.className = "status-box";
+  resultsContainer.innerHTML = "Loading models...";
 
-  models.gender = await loadSingleModel(modelURLs.gender);
-  models.age = await loadSingleModel(modelURLs.age);
-  models.glasses = await loadSingleModel(modelURLs.glasses);
+  try {
+    models.gender = await loadSingleModel(modelURLs.gender);
+    models.age = await loadSingleModel(modelURLs.age);
+    models.glasses = await loadSingleModel(modelURLs.glasses);
 
-  document.getElementById("results").innerHTML = "Models loaded. Please upload an image...";
+    resultsContainer.innerHTML = "Models loaded successfully. Please upload an image.";
+  } catch (error) {
+    console.error("Error loading models:", error);
+    resultsContainer.innerHTML = "Error loading models. Please refresh the page.";
+  }
 }
 
 function getTopPrediction(predictions) {
@@ -49,19 +56,50 @@ function formatClassName(className) {
   return className;
 }
 
-function interpretConfidence(className, probability) {
+function getCategoryTitle(categoryKey) {
+  if (categoryKey === "gender") return "Gender Classifier";
+  if (categoryKey === "age") return "Age Classifier";
+  if (categoryKey === "glasses") return "Eyewear Classifier";
+  return "Classifier";
+}
+
+function interpretConfidence(categoryKey, className, probability) {
   const percentage = (probability * 100).toFixed(1);
   const formattedClass = formatClassName(className);
 
   if (probability >= IS_THRESHOLD) {
-    return `Subject is ${formattedClass} (${percentage}%)`;
+    return {
+      category: getCategoryTitle(categoryKey),
+      text: `Subject is ${formattedClass}`,
+      percentage: `${percentage}%`,
+      level: "is",
+      cssClass: "status-is",
+      badgeClass: "badge-is",
+      badgeText: "High Confidence"
+    };
   }
 
   if (probability >= LIKELY_THRESHOLD) {
-    return `Subject is likely ${formattedClass} (${percentage}%)`;
+    return {
+      category: getCategoryTitle(categoryKey),
+      text: `Subject is likely ${formattedClass}`,
+      percentage: `${percentage}%`,
+      level: "likely",
+      cssClass: "status-likely",
+      badgeClass: "badge-likely",
+      badgeText: "Medium Confidence"
+    };
   }
 
-  return `Subject could be ${formattedClass} (${percentage}%)`;
+  return {
+    category: getCategoryTitle(categoryKey),
+    text: `Subject could be ${formattedClass}`,
+    percentage: `${percentage}%`,
+    level: "could",
+    cssClass: "status-could",
+    badgeClass: "badge-could",
+    badgeText: "Low Confidence"
+  };
 }
 
 async function classifyImage(imgElement) {
@@ -75,28 +113,60 @@ async function classifyImage(imgElement) {
   const topAge = getTopPrediction(agePredictions);
   const topGlasses = getTopPrediction(glassesPredictions);
 
-  agentResults.push(interpretConfidence(topGender.className, topGender.probability));
-  agentResults.push(interpretConfidence(topAge.className, topAge.probability));
-  agentResults.push(interpretConfidence(topGlasses.className, topGlasses.probability));
+  agentResults.push(interpretConfidence("gender", topGender.className, topGender.probability));
+  agentResults.push(interpretConfidence("age", topAge.className, topAge.probability));
+  agentResults.push(interpretConfidence("glasses", topGlasses.className, topGlasses.probability));
 
   displayResults();
 }
 
 function displayResults() {
+  const resultsContainer = document.getElementById("results");
+
   if (agentResults.length === 0) {
-    document.getElementById("results").innerHTML = "Please upload an image...";
+    resultsContainer.className = "status-box";
+    resultsContainer.innerHTML = "Please upload an image...";
     return;
   }
 
-  document.getElementById("results").innerHTML = agentResults
-    .map(result => `<div>${result}</div>`)
+  resultsContainer.className = "";
+
+  resultsContainer.innerHTML = agentResults
+    .map(result => `
+      <div class="result-card">
+        <div class="result-label">${result.category}</div>
+        <div class="result-text ${result.cssClass}">${result.text}</div>
+        <div class="result-confidence">Confidence: ${result.percentage}</div>
+        <div class="badge ${result.badgeClass}">${result.badgeText}</div>
+      </div>
+    `)
     .join("");
 }
 
+function drawImageContain(img, x, y, boxWidth, boxHeight) {
+  const imgAspect = img.width / img.height;
+  const boxAspect = boxWidth / boxHeight;
+
+  let drawWidth, drawHeight;
+
+  if (imgAspect > boxAspect) {
+    drawWidth = boxWidth;
+    drawHeight = boxWidth / imgAspect;
+  } else {
+    drawHeight = boxHeight;
+    drawWidth = boxHeight * imgAspect;
+  }
+
+  const offsetX = x + (boxWidth - drawWidth) / 2;
+  const offsetY = y + (boxHeight - drawHeight) / 2;
+
+  image(img, offsetX, offsetY, drawWidth, drawHeight);
+}
+
 function setup() {
-  const canvas = createCanvas(480, 360);
+  const canvas = createCanvas(420, 420);
   canvas.parent("image_container");
-  background("#829FC4");
+  background("#eef4fb");
 
   preloadModels();
 
@@ -108,7 +178,10 @@ function setup() {
         img.hide();
         inputImage = img;
 
-        document.getElementById("results").innerHTML = "Classifying image...";
+        const resultsContainer = document.getElementById("results");
+        resultsContainer.className = "status-box";
+        resultsContainer.innerHTML = "Classifying image...";
+
         await classifyImage(img.elt);
       });
     }
@@ -116,9 +189,16 @@ function setup() {
 }
 
 function draw() {
-  background("#143C73");
+  background("#eef4fb");
+
+  stroke("#c9d8ea");
+  strokeWeight(2);
+  fill("#f8fbff");
+  rect(10, 10, width - 20, height - 20, 12);
+
+  noStroke();
 
   if (inputImage) {
-    image(inputImage, 0, 0, width, height);
+    drawImageContain(inputImage, 20, 20, width - 40, height - 40);
   }
 }
